@@ -129,6 +129,7 @@ configuration CreateADPDC
 
         Script CreateUsers {
             SetScript  = {
+                Import-Module ActiveDirectory
                 $ouName = 'ToSync'
                 $ouPath = "OU=$ouName,DC=adatum,DC=com"
                 $adUserNamePrefix = 'aduser'
@@ -154,6 +155,9 @@ configuration CreateADPDC
 
         Script CreateGroups {
             SetScript  = {
+                Import-Module ActiveDirectory
+                $ouName = 'ToSync'
+                $ouPath = "OU=$ouName,DC=adatum,DC=com"
                 New-ADGroup -Name 'az140-avd-pooled' -GroupScope 'Global' -GroupCategory Security -Path $ouPath
                 New-ADGroup -Name 'az140-avd-remote-app' -GroupScope 'Global' -GroupCategory Security -Path $ouPath
                 New-ADGroup -Name 'az140-avd-personal' -GroupScope 'Global' -GroupCategory Security -Path $ouPath
@@ -167,6 +171,7 @@ configuration CreateADPDC
 
         Script AddGroupMembers {
             SetScript  = {
+                Import-Module ActiveDirectory
                 Add-ADGroupMember -Identity 'az140-avd-pooled' -Members 'aduser1', 'aduser2', 'aduser3', 'aduser4'
                 Add-ADGroupMember -Identity 'az140-avd-remote-app' -Members 'aduser1', 'aduser5', 'aduser6'
                 Add-ADGroupMember -Identity 'az140-avd-personal' -Members 'aduser7', 'aduser8', 'aduser9'
