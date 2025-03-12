@@ -183,20 +183,20 @@ configuration CreateADPDC
             DependsOn  = '[Script]CreateGroups'
         }
 
-        # Script InstallLibraries {
-        #     SetScript  = {
-        #         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        #         Uninstall-Module PowerShellGet -Force -Verbose
-        #         UnRegister-PSRepository PSGallery -Verbose
-        #         Register-PSRepository -Default  -Verbose
-        #         Install-Module -Name PowerShellGet -SkipPublisherCheck -Force
-        #         Install-Module -Name Az -AllowClobber -SkipPublisherCheck -Force
-        #         Install-Module -Name AzureAD -Force -SkipPublisherCheck
-        #     }
-        #     GetScript  = { @{} }
-        #     TestScript = { $false }
-        #     DependsOn  = '[Script]AddGroupMembers'
-        # }
+        Script InstallLibraries {
+            SetScript  = {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                # Uninstall-Module PowerShellGet -Force -Verbose
+                # UnRegister-PSRepository PSGallery -Verbose
+                # Register-PSRepository -Default  -Verbose
+                Install-PackageProvider -Name NuGet -Force -Verbose -MinimumVersion 2.8.5.201
+                Install-Module -Name Az -AllowClobber -SkipPublisherCheck -Force
+                Install-Module -Name AzureAD -Force -SkipPublisherCheck
+            }
+            GetScript  = { @{} }
+            TestScript = { $false }
+            DependsOn  = '[Script]AddGroupMembers'
+        }
 
         
 
