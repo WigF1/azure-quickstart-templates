@@ -186,7 +186,10 @@ configuration CreateADPDC
         Script InstallLibraries {
             SetScript  = {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Install-Module -Name PowerShellGet -Force -SkipPublisherCheck
+                Uninstall-Module PowerShellGet -Force -Verbose
+                UnRegister-PSRepository PSGallery -Verbose
+                Register-PSRepository -Default  -Verbose
+                Install-Module -Name PowerShellGet -SkipPublisherCheck -Force
                 Install-Module -Name Az -AllowClobber -SkipPublisherCheck -Force
                 Install-Module -Name AzureAD -Force -SkipPublisherCheck
             }
