@@ -24,10 +24,6 @@ configuration CreateADPDC
             ActionAfterReboot = 'ContinueConfiguration'
         }
 
-        PendingReboot {
-            Ensure = "Present"
-        }
-        
         WindowsFeature DNS { 
             Ensure = "Present" 
             Name   = "DNS"		
@@ -111,6 +107,7 @@ configuration CreateADPDC
 
         Configuration CheckReboot {
             # Import-DscResource -ModuleName xPendingReboot
+            Import-Module xPendingReboot
             Node localhost {
                 xPendingReboot RebootCheck {
                     Name = "CheckReboot"
