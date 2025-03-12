@@ -110,7 +110,7 @@ configuration CreateADPDC
         } 
 
         Configuration CheckReboot {
-            Import-DscResource -ModuleName xPendingReboot
+            # Import-DscResource -ModuleName xPendingReboot
             Node localhost {
                 xPendingReboot RebootCheck {
                     Name = "CheckReboot"
