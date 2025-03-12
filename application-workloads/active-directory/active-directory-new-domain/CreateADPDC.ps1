@@ -24,6 +24,10 @@ configuration CreateADPDC
             ActionAfterReboot = 'ContinueConfiguration'
         }
 
+        PendingReboot {
+            Ensure = "Present"
+        }
+        
         WindowsFeature DNS { 
             Ensure = "Present" 
             Name   = "DNS"		
@@ -164,7 +168,7 @@ configuration CreateADPDC
             DependsOn  = '[Script]CreateUsers'
         }
 
-        Script AddGroupMembera {
+        Script AddGroupMembers {
             SetScript  = {
                 Add-ADGroupMember -Identity 'az140-avd-pooled' -Members 'aduser1', 'aduser2', 'aduser3', 'aduser4'
                 Add-ADGroupMember -Identity 'az140-avd-remote-app' -Members 'aduser1', 'aduser5', 'aduser6'
