@@ -118,6 +118,7 @@ configuration CreateADPDC
         Script CreateOUs {
             SetScript  = {
                 Import-Module ActiveDirectory
+                New-ADOrganizationalUnit 'AVDInfra' -path 'DC=adatum,DC=com' -ProtectedFromAccidentalDeletion $false
                 New-ADOrganizationalUnit 'ToSync' -path 'DC=adatum,DC=com' -ProtectedFromAccidentalDeletion $false
                 New-ADOrganizationalUnit 'AVDClients' -path 'DC=adatum,DC=com' -ProtectedFromAccidentalDeletion $false
                 Write-Verbose -Verbose "Created OUs"
@@ -186,19 +187,54 @@ configuration CreateADPDC
         Script InstallLibraries {
             SetScript  = {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                # Uninstall-Module PowerShellGet -Force -Verbose
-                # UnRegister-PSRepository PSGallery -Verbose
-                # Register-PSRepository -Default  -Verbose
+                # Disable IE Enhanced Security Configuration
+                $adminRegEntry = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'
+                Set-ItemProperty -Path $AdminRegEntry -Name 'IsInstalled' -Value 0
+                Stop-Process -Name Explorer
+                # Ensure PSGallery is registered
+                UnRegister-PSRepository PSGallery -Verbose -ErrorAction SilentlyContinue
+                Register-PSRepository -Default  -Verbose -ErrorAction SilentlyContinue
+                Start-Sleep 5
                 Install-PackageProvider -Name NuGet -Force -Verbose -MinimumVersion 2.8.5.201
+                Start-Sleep 5
                 Install-Module -Name Az -AllowClobber -SkipPublisherCheck -Force
-                Install-Module -Name AzureAD -Force -SkipPublisherCheck
             }
             GetScript  = { @{} }
             TestScript = { $false }
             DependsOn  = '[Script]AddGroupMembers'
         }
 
-        
+        Script ConfigureTenantItems {
+            SetScript = {
+                Update-AzConfig -EnableLoginByWam $false
+                # Add the UPN suffix to the forest
+                $aadDomainName = 'wigmcphotmail.onmicrosoft.com'
+                Get-ADForest | Set-ADForest -UPNSuffixes @{add = "$aadDomainName" }
+                # Update the UPN for all users in the domain
+                $domainUsers = Get-ADUser -Filter { UserPrincipalName -like '*adatum.com' } -Properties userPrincipalName -ResultSetSize $null
+                $domainUsers | ForEach-Object { $newUpn = $_.UserPrincipalName.Replace('adatum.com', $aadDomainName); $_ | Set-ADUser -UserPrincipalName $newUpn }
+                # Reset domain admin back to adatum.com
+                $domainAdminUser = Get-ADUser -Filter {sAMAccountName -eq 'Student'} -Properties userPrincipalName
+                $domainAdminUser | Set-ADUser -UserPrincipalName 'student@adatum.com'
+                # Enable TLS1.2
+                New-Item 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-Item 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
+                New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
+                New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
+                Write-Host 'TLS 1.2 has been enabled.'
+            }
+            GetScript = { @{} }
+            TestScript = { $false }
+            DependsOn = '[Script]InstallLibraries'
+        }
 
     }
 } 
