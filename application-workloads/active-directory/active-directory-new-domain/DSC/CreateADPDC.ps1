@@ -178,6 +178,7 @@ configuration CreateADPDC
                 Add-ADGroupMember -Identity 'az140-avd-personal' -Members 'aduser7', 'aduser8', 'aduser9'
                 Add-ADGroupMember -Identity 'az140-avd-users' -Members 'aduser1', 'aduser2', 'aduser3', 'aduser4', 'aduser5', 'aduser6', 'aduser7', 'aduser8', 'aduser9'
                 Add-ADGroupMember -Identity 'az140-avd-admins' -Members 'avdadmin1'
+                Add-ADGroupMember -Identity 'Domain Admins' -Members 'avdadmin1'
             }
             GetScript  = { @{} }
             TestScript = { $false }
