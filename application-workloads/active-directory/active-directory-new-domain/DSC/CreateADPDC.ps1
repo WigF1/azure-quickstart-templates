@@ -190,7 +190,7 @@ configuration CreateADPDC
                 # Disable IE Enhanced Security Configuration
                 $adminRegEntry = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'
                 Set-ItemProperty -Path $AdminRegEntry -Name 'IsInstalled' -Value 0
-                Stop-Process -Name Explorer
+                Stop-Process -Name Explorer -ErrorAction SilentlyContinue
                 # Ensure PSGallery is registered
                 UnRegister-PSRepository PSGallery -Verbose -ErrorAction SilentlyContinue
                 Register-PSRepository -Default  -Verbose -ErrorAction SilentlyContinue
